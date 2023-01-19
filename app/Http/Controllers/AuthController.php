@@ -50,18 +50,15 @@ class AuthController extends Controller
     }
 
     public function login(Request $request){
-        $email = $request['email'];
-        if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
-            $auth = Auth::user();
-            if ($auth->status)
-            return view('auth.dashboard');
-            else return view('auth.check',[
-                'id' => $auth->id,
-                'code' => $auth->message,
-            ]);
-
-        } else {
-            return view('auth.login');
-        }
+        $message = Cereal::generate(['length'=>6, 'delimiter'=>'']);
+        $user = User::where('email', $request['email'])->first();
+        $user->message = $message;
+        $user->status = 0;
+        $user->save();
+        Sms::send('998'.$user['phone'], $message);
+        return view('auth.check',[
+            'id' => $user->id,
+            'code' => $message,
+        ]);
     }
 }
